@@ -7,7 +7,7 @@ public class NameManager : MonoBehaviour
 {
     public static NameManager instance;
     public TMP_InputField inputField;
-    public string name;
+    public new string name;
 
     private void Awake() {
         if (instance != null) {

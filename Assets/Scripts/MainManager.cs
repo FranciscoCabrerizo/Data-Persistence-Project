@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
@@ -19,8 +20,13 @@ public class MainManager : MonoBehaviour
     
     private bool m_Started = false;
     private int m_Points;
-    public int bestScore;
-    public string bestScore_name;
+    [System.Serializable]
+    class bestScoreData {
+        public int bestScore_points;
+        public string bestScore_name;
+    }
+    private int bestScore;
+    private string playerBestScore;
     private bool m_GameOver = false;
 
     
@@ -30,7 +36,10 @@ public class MainManager : MonoBehaviour
         if (NameManager.instance != null) {
             SetName(NameManager.instance.name);
         }
-        
+
+        LoadBestScore();
+        BestScoreText.text = $"Best Score: {playerBestScore} : {bestScore}";
+
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
         
@@ -86,14 +95,39 @@ public class MainManager : MonoBehaviour
     {
         if (m_Points > bestScore) {
             bestScore = m_Points;
-            bestScore_name = playerName;
+            playerBestScore = playerName;
         }
-        SetBestScore(playerName, m_Points);
+        SetBestScore(playerBestScore, bestScore);
         m_GameOver = true;
         GameOverText.SetActive(true);
+        SaveBestScore();
     }
 
     void SetBestScore(string name, int score) {
         BestScoreText.text = $"Best Score: {name} : {score}";
+    }
+
+    void SaveBestScore() {
+        bestScoreData data = new bestScoreData();
+        data.bestScore_name = playerBestScore;
+        data.bestScore_points = bestScore;
+
+        string json = JsonUtility.ToJson(data);
+
+        File.WriteAllText(Application.persistentDataPath + "/savefile.json", json);
+    }
+
+    void LoadBestScore() {
+        string path = Application.persistentDataPath + "/savefile.json";
+        if (File.Exists(path)) {
+            string json = File.ReadAllText(path);
+            bestScoreData data = JsonUtility.FromJson<bestScoreData>(json);
+
+            bestScore = data.bestScore_points;
+            playerBestScore = data.bestScore_name;
+        } else {
+            bestScore = 0;
+            playerBestScore = "Name";
+        }
     }
 }
